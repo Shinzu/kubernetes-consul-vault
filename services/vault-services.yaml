@@ -1,0 +1,62 @@
+# Front-end load-balancer service for vault instances
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-lb
+  labels:
+    app: vault
+spec:
+  ports:
+    - name: vaultport
+      port: 8200
+      targetPort: 8200
+      nodePort: 30820
+  selector:
+    app: vault
+  type: NodePort
+---
+# Direct access to vault instance 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-1
+  labels:
+    app: vault
+    instance: vault-1
+spec:
+  ports:
+    - name: vaultport
+      port: 8200
+      targetPort: 8200
+      nodePort: 30821
+    # This should not be required, as the container IP should work for this.
+    - name: backendport
+      port: 8201
+      targetPort: 8201
+  selector:
+    app: vault
+    instance: vault-1
+  type: NodePort
+---
+# Direct access to vault instance 2
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-2
+  labels:
+    app: vault
+    instance: vault-2
+spec:
+  ports:
+    - name: vaultport
+      port: 8200
+      targetPort: 8200
+      nodePort: 30822
+    - name: backendport
+      port: 8201
+      targetPort: 8201
+  selector:
+    app: vault
+    instance: vault-2
+  type: NodePort
+---

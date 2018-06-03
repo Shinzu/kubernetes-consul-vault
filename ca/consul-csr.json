@@ -1,0 +1,24 @@
+{
+  "CN": "server.dc1.cluster.local",
+  "hosts": [
+    "server.dc1.cluster.local",
+    "127.0.0.1",
+    "10.0.2.50",
+    "10.0.2.51",
+    "10.0.2.52",
+    "10.0.2.53"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 4096
+  },
+  "names": [
+    {
+      "C": "DE",
+      "L": "Berlin",
+      "O": "Shinzu Org",
+      "OU": "Consul",
+      "ST": "Berlin"
+    }
+  ]
+}

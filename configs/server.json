@@ -1,0 +1,15 @@
+{
+  "ca_file": "/etc/tls/ca.pem",
+  "cert_file": "/etc/tls/consul.pem",
+  "key_file": "/etc/tls/consul-key.pem",
+  "verify_incoming_rpc": true,
+  "verify_incoming_https": false,
+  "verify_outgoing": true,
+  "verify_server_hostname": true,
+  "acl_datacenter":"dc1",
+  "acl_default_policy":"deny",
+  "acl_down_policy":"extend-cache",
+  "ports": {
+    "https": 8443
+  }
+}

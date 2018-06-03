@@ -1,0 +1,132 @@
+# Deployment for vault instance 2
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vault-2
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vault
+        instance: vault-2
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: vault
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+          image: "vault:0.10.1"
+          resources:
+            requests:
+              cpu: 300m
+              memory: 1000Mi
+            limits:
+              cpu: 300m
+              memory: 1500Mi
+          args:
+            - "server"
+          ports:
+          - containerPort: 8200
+            name: main-port
+          - containerPort: 8201
+            name: local-talk-port
+          - containerPort: 9000
+            name: monitor-port
+          env:
+          - name: VAULT_CONSUL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: vault-consul-key
+                key: consul-key
+          - name: VAULT_LOCAL_CONFIG
+            # Disable registration as we don't even use consul's service discovery features
+            # Port 9000 listener is for local and status checks
+            # See https://github.com/hashicorp/vault/issues/1559 for why true is quoted in disable_registration
+            value:
+                backend "consul" {
+                  address = "localhost:8500"
+                  cluster_addr = "https://$(VAULT_2_SERVICE_HOST):$(VAULT_2_SERVICE_PORT_BACKENDPORT)"
+                  disable_registration = "false"
+                  token = "$(VAULT_CONSUL_KEY)"
+                }
+                listener "tcp" {
+                  address = "0.0.0.0:8200"
+                  tls_cert_file = "/etc/tls/tls.crt"
+                  tls_key_file = "/etc/tls/tls.key"
+                }
+                listener "tcp" {
+                  address = "0.0.0.0:9000"
+                  tls_disable = 1
+                }
+                disable_mlock = true
+                ui = true
+          # VAULT_ADDR is provided only for convenience - so don't have to set when logging in.
+          - name: VAULT_ADDR
+            value: http://localhost:9000
+          - name: VAULT_REDIRECT_ADDR
+            value: http://localhost:9000
+          readinessProbe:
+            httpGet:
+              # "leader" returns a 503 for a sealed vault, which is basically what we want
+              path: /v1/sys/leader
+              port: 9000
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          volumeMounts:
+              # name must match the volume name below
+              - name: "tls"
+                mountPath: /etc/tls
+              - name: log-storage
+                mountPath: /vault/logs
+        - name: consul-agent-client
+          image: "consul:1.1.0"
+#          resources:
+#            limits:
+#              cpu: 100m
+#              memory: 200Mi
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GOSSIP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: consul
+                  key: gossip-encryption-key
+          args:
+            - "agent"
+            - "-data-dir=/tmp/consul"
+            - "-encrypt=$(GOSSIP_ENCRYPTION_KEY)"
+            - "-domain=cluster.local"
+            - "-retry-join=consul-0.consul.$(NAMESPACE).svc.cluster.local"
+            - "-config-dir=/etc/consul"
+            - "-node=vault-2"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/consul
+            - name: tls-consul
+              mountPath: /etc/tls
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/sh
+                - -c
+                - consul leave
+      volumes:
+        - name: log-storage
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: consul
+        - name: tls-consul
+          secret:
+            secretName: consul  
+        - name: tls
+          secret:
+            secretName: vaulttls

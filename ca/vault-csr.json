@@ -1,0 +1,27 @@
+{
+  "CN": "vault.svc.cluster.local",
+  "hosts": [
+    "vault.svc.cluster.local",
+    "vault-lb.svc.cluster.local",
+    "vault-1.svc.cluster.local",
+    "vault-2.svc.cluster.local",
+    "127.0.0.1",
+    "10.0.2.50",
+    "10.0.2.51",
+    "10.0.2.52",
+    "10.0.2.53"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 4096
+  },
+  "names": [
+    {
+      "C": "DE",
+      "L": "Berlin",
+      "O": "Shinzu Org",
+      "OU": "Vault",
+      "ST": "Berlin"
+    }
+  ]
+}
