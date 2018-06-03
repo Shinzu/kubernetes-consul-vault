@@ -100,7 +100,7 @@ kubectl create secret generic consul \
   --from-file=consul-key.pem
 ```
 
-**[Depreciated]**Create Tokens for the ACL's with uuidgen and put it in the configs/server.json file.
+**Depreciated**Create Tokens for the ACL's with uuidgen and put it in the configs/server.json file.
 
 Since Consul 0.9.1 you can bootstrap the ACL Tokens over the ACL API described [here](https://www.consul.io/docs/guides/acl.html#bootstrapping-acls).
 
