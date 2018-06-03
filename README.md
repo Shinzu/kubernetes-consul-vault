@@ -104,7 +104,7 @@ kubectl create secret generic consul \
 
 Since Consul 0.9.1 you can bootstrap the ACL Tokens over the ACL API described [here](https://www.consul.io/docs/guides/acl.html#bootstrapping-acls).
 
-ACL are bootstrapped [below](#Setup-ACL-for-Consul) in the ACL Section.
+ACL are bootstrapped [below](#setup-acl-for-consul) in the ACL Section.
 
 Store the Consul server configuration file in a ConfigMap:
 
