@@ -308,7 +308,7 @@ $ kubectl exec -it <vault-1*> --container vault -- sh
 
 $ vault operator init
 or
-$ vault init -key-shares=1 -key-threshold=1
+$ vault operator init -key-shares=1 -key-threshold=1
 
 ```
 
