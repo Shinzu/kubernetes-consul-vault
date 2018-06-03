@@ -328,6 +328,6 @@ $ vault auth
 Token (will be hidden): <initial_root_token>
 ```
 
-Then access <vault-2*> in the exact same way (`kubectl exec -it <vault-2*> --container vault /bin/sh`) and unseal it.
+Then access <vault-2*> in the exact same way (`kubectl exec -it <vault-2*> --container vault -- /bin/sh`) and unseal it.
 It will go into standby mode.
 
