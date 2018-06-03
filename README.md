@@ -304,7 +304,7 @@ where HTTP port 9000 is exposed for access without https. You can decide
 how many keys and the recovery threshold using args to `vault init`
 
 ``` sh
-$ kubectl exec -it <vault-1*> --container vault -- /bin/sh
+$ kubectl exec -it <vault-1*> --container vault -- sh
 
 $ vault operator init
 or
@@ -328,6 +328,6 @@ $ vault auth
 Token (will be hidden): <initial_root_token>
 ```
 
-Then access <vault-2*> in the exact same way (`kubectl exec -it <vault-2*> --container vault -- /bin/sh`) and unseal it.
+Then access <vault-2*> in the exact same way (`kubectl exec -it <vault-2*> --container vault -- sh`) and unseal it.
 It will go into standby mode.
 
