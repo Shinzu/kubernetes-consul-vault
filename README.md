@@ -283,7 +283,7 @@ $ kubectl create secret tls vaulttls --cert=vaulttls.fullcert.pem --key=vaulttls
 $ kubectl apply -f services/vault-services.yaml
 ```
 
-### Vault Deployment
+### Deploy vault deployment sets
 You are now ready to deploy the vault instances:
 
 ``` sh
