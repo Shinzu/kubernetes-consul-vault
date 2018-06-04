@@ -234,6 +234,7 @@ consul-1  10.2.2.199:8301  alive   server  1.1.0  2         dc1  <all>
 consul-2  10.2.1.125:8301  alive   server  1.1.0  2         dc1  <all>
 ```
 
+## Vault deployment
 ### Create a key that vault will use to access consul (vault-consul-key)
 
 We'll use the consul web UI to create this, which avoids all manner of
