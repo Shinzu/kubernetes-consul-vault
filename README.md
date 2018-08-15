@@ -33,7 +33,7 @@ In my Setup i use local storage as persistence Volumes for Consul.
 First we create a storage class local-storage:
 
 ```
-kubectl apply volumes/storage_class.yaml
+kubectl apply -f volumes/storage_class.yaml
 ```
 
 Now we create the persistenace Volumes, since the local-storage class cannot create this dynamicly you must create this folders manually on each node.
