@@ -19,7 +19,7 @@ spec:
             capabilities:
               add:
                 - IPC_LOCK
-          image: "vault:0.10.1"
+          image: "vault:0.10.4"
           resources:
             requests:
               cpu: 300m
@@ -83,7 +83,7 @@ spec:
               - name: log-storage
                 mountPath: /vault/logs
         - name: consul-agent-client
-          image: "consul:1.1.0"
+          image: "consul:1.2.2"
 #          resources:
 #            limits:
 #              cpu: 100m

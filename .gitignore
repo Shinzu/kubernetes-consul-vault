@@ -3,3 +3,4 @@
 *.txt
 *.key
 *.csr
+vault-creds.json

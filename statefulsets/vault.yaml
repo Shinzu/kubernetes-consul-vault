@@ -1,0 +1,182 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  serviceName: vault
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values: ['vault']
+            topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 10
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: vault-init
+        image: registry.hub.docker.com/sethvargo/vault-init:0.1.1
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: vault-creds
+          mountPath: /meta/credentials
+        env:
+        - name: CHECK_INTERVAL
+          value: "30"
+        - name: GCS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: vault
+              key: gcs_bucket_name
+        - name: KMS_KEY_ID
+          valueFrom:
+            configMapKeyRef:
+              name: vault
+              key: kms_key_id
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          valueFrom:
+            configMapKeyRef:
+              name: vault
+              key: google_application_credentials
+      - name: vault
+        image: registry.hub.docker.com/library/vault:0.11.0
+        imagePullPolicy: Always
+        args: ['server']
+        securityContext:
+          capabilities:
+            add: ['IPC_LOCK']
+        ports:
+        - containerPort: 8200
+          name: vault-port
+          protocol: TCP
+        - containerPort: 8201
+          name: cluster-port
+          protocol: TCP
+        resources:
+          requests:
+            cpu: '500m'
+            memory: '1Gi'
+          limits:
+            cpu: '500m'
+            memory: '1Gi'
+        volumeMounts:
+        - name: vault-tls
+          mountPath: /etc/vault/tls
+        - name: log-storage
+          mountPath: /vault/logs
+        env:
+        - name: POD_IP_ADDR
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_IP_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: vault
+              key: node_ip_addr
+        - name: VAULT_CONSUL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: vault-consul-key
+              key: consul-key
+        - name: VAULT_LOCAL_CONFIG
+          value: |
+            api_addr     = "https://$(NODE_IP_ADDR):30820"
+            cluster_addr = "https://$(POD_IP_ADDR):8201"
+
+            ui = true
+
+            backend "consul" {
+              address = "localhost:8500"
+              cluster_addr = "https://$(POD_IP_ADDR):8201"
+              disable_registration = "false"
+              token = "$(VAULT_CONSUL_KEY)"
+            }
+
+            listener "tcp" {
+              address       = "0.0.0.0:8200"
+              tls_cert_file = "/etc/vault/tls/vault.pem"
+              tls_key_file  = "/etc/vault/tls/vault-key.pem"
+
+              tls_disable_client_certs = true
+            }
+        readinessProbe:
+          httpGet:
+            path: /v1/sys/health?standbyok=true
+            port: 8200
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: consul-agent-client
+        image: "consul:1.2.2"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 100m
+            memory: 200Mi
+        env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: GOSSIP_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: consul
+                key: gossip-encryption-key
+        args:
+          - "agent"
+          - "-data-dir=/tmp/consul"
+          - "-encrypt=$(GOSSIP_ENCRYPTION_KEY)"
+          - "-domain=cluster.local"
+          - "-retry-join=consul-0.consul.$(NAMESPACE).svc.cluster.local"
+          - "-config-dir=/etc/consul"
+          - "-node=$(HOSTNAME)"
+        volumeMounts:
+          - name: config
+            mountPath: /etc/consul
+          - name: tls-consul
+            mountPath: /etc/tls
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - consul leave
+      volumes:
+      - name: vault-tls
+        secret:
+          secretName: vault
+      - name: vault-creds
+        secret:
+          secretName: vault-creds
+      - name: log-storage
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: consul
+      - name: tls-consul
+        secret:
+          secretName: consul  
