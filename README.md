@@ -523,7 +523,7 @@ kubectl create configmap vault \
   --from-literal node_ip_addr=10.0.2.51 \
   --from-literal gcs_bucket_name=${GCS_BUCKET_NAME} \
   --from-literal kms_key_id=${KMS_KEY_ID} \
-  --from-literal google_application_credentials="/meta/credentials/vault-creds.json
+  --from-literal google_application_credentials="/meta/credentials/vault-creds.json"
 ```
 
 Create `vault` creds secret(needed for vault-init container):
