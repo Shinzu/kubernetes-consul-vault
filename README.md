@@ -273,7 +273,7 @@ $ kubectl create secret generic vault-consul-key --from-literal=consul-key=9f34a
 
 Get key and cert files for the domain vault will be exposed from. You can do this any way
 that works for your deployment, including a [self-signed certificate](http://www.akadia.com/services/ssh_test_certificate.html), so long as you have a concatenated full certificate chain
-in vaulttls.fullcert.pem and private key in vaulttls.key :
+in vault-combined.pem and private key in vault-key.pem :
 
 ``` sh
 $ cfssl gencert \
