@@ -282,8 +282,10 @@ $ cfssl gencert \
   -config=ca/ca-config.json \
   -profile=default \
   ca/vault-csr.json | cfssljson -bare vault
+  
+$ cat vault.pem ca.pem > vault-combined.pem
 
-$ kubectl create secret tls vaulttls --cert=vaulttls.fullcert.pem --key=vaulttls.key
+$ kubectl create secret tls vaulttls --cert=vault-combined.pem --key=vault-key.pem
 ```
 
 ### Create services for vault
