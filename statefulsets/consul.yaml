@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
@@ -25,7 +26,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: consul
-          image: "consul:1.2.2"
+          image: "consul:1.4.2"
           env:
             - name: POD_IP
               valueFrom:
@@ -96,14 +97,16 @@ spec:
             name: consul
         - name: tls
           secret:
-            secretName: consul  
+            secretName: consul
   volumeClaimTemplates:
     - metadata:
         name: data
+        labels:
+          app: consul
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-storage
+        storageClassName: rook-ceph-block
         resources:
           requests:
             storage: 2Gi

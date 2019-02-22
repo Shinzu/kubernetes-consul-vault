@@ -6,10 +6,13 @@
   "verify_incoming_https": false,
   "verify_outgoing": true,
   "verify_server_hostname": true,
-  "acl_datacenter":"dc1",
-  "acl_default_policy":"deny",
-  "acl_down_policy":"extend-cache",
   "ports": {
     "https": 8443
-  }
+  },
+  "acl": {
+    "enabled": true,
+    "default_policy": "deny",
+    "down_policy": "extend-cache"
+  },
+  "primary_datacenter": "dc1"
 }

@@ -150,12 +150,12 @@ First create bootstrap master token, this is a managment token:
 
 ```
 #kubectl exec -it consul-0 -- curl --request PUT http://127.0.0.1:8500/v1/acl/bootstrap
-{"ID":"<master token>"}
+{"ID":"<master token>","AccessorID":"7b9d03ea-510e-7d0b-2be8-45c42937698f","SecretID":"<master token>","Description":"Bootstrap Token (Global Management)","Policies":[{"ID":"00000000-0000-0000-0000-000000000001","Name":"global-management"}],"Local":false,"CreateTime":"2019-02-22T15:31:17.289734141Z","Hash":"oyrov6+GFLjo/KZAfqgxF/X4J/3LX0435DOBy9V22I0=","CreateIndex":11,"ModifyIndex":11}
 ```
 
 ### Set the rules for agent token
 
-On the ACL Page in the WebUI create a new Agent Token acl.(You can use the master token to access this)
+On the ACL Page in the WebUI create a new Agent Token Policy.(You can use the master token to access this)
 
 ```
 node "" {
@@ -176,11 +176,26 @@ kubectl exec -it consul-0 -- curl \
     --request PUT \
     --header "X-Consul-Token: <master token>" \
     --data '{
-        "Name": "Agent Token", 
-        "Type": "client", 
-        "Rules": "node \"\" { policy = \"write\"} service \"\" { policy = \"read\"} key \"lock/\" { policy = \"write\"}"
-        }' http://127.0.0.1:8500/v1/acl/create
-{"ID":"<agent token>"}    
+        "Name": "agent-token",
+        "Description": "Agent Token Policy",
+        "Rules": "node_prefix \"\" { policy = \"write\"} service_prefix \"\" { policy = \"read\"} key_prefix \"lock/\" { policy = \"write\"}",
+        "Datacenters": ["dc1"]
+        }' http://127.0.0.1:8500/v1/acl/policy
+{"ID":"45dd10b1-2b7c-273a-c2ec-da4a4ea216e9","Name":"agent-token","Description":"Agent Token Policy","Rules":"node_prefix \"\" { policy = \"write\"} service_prefix \"\" { policy = \"read\"} key_prefix \"lock/\" { policy = \"write\"}","Datacenters":["dc1"],"Hash":"8E2cR3dI75q56akVS8HcARoVNmUcZA8FApULOoYN9tE=","CreateIndex":14,"ModifyIndex":14}
+```
+
+after that you can create the agent token with the newly created policy
+
+```
+kubectl exec -it consul-0 -- curl \
+    --request PUT \
+    --header "X-Consul-Token: <master token>" \
+    --data '{
+        "Description": "Agent token",
+        "Policies": [{"ID": "45dd10b1-2b7c-273a-c2ec-da4a4ea216e9"}],
+        "Local": true
+        }' http://127.0.0.1:8500/v1/acl/token
+{"AccessorID":"048763c4-ba6c-6f03-3173-b16e9fbfaf92","SecretID":"<agent token>","Description":"Agent token","Policies":[{"ID":"45dd10b1-2b7c-273a-c2ec-da4a4ea216e9","Name":"agent-token"}],"Local":true,"CreateTime":"2019-02-22T15:34:11.427293434Z","Hash":"JBYiLsbos13QGMJgJMwBy5UfGTFUH00BHtMdWceVwdg=","CreateIndex":16,"ModifyIndex":16}
 ```
 
 ### Apply ACL to agents
@@ -192,18 +207,33 @@ kubectl exec -it consul-0 -- curl --request PUT --header "X-CONSUL-TOKEN: <maste
 ```
 ### Update anonymous Token
 
-In order to allow operation like `consul members` works without a token we can allow anonymous some operations
+In order to allow operation like `consul members` works without a token we can allow anonymous some operations.
+
+First we create a policy that allows to read node infos
 
 ```
 kubectl exec -it consul-0 -- curl \
     --request PUT \
     --header "X-Consul-Token: <master token>" \
     --data '{
-        "ID": "anonymous", 
-        "Type": "client", 
-        "Rules": "node \"\" { policy = \"read\"} service \"consul\" { policy = \"read\"} key \"lock/\" { policy = \"write\"}"
-        }' http://127.0.0.1:8500/v1/acl/update
-{"ID":"anonymous"}
+        "Name": "list-al-nodes",
+        "Description": "Anonymous node info policy",
+        "Rules": "node_prefix \"\" { policy = \"read\" }"
+        }' http://127.0.0.1:8500/v1/acl/policy
+{"ID":"7429a177-a322-9e8e-efc0-36e9e78f51f3","Name":"list-al-nodes","Description":"Anonymous node info policy","Rules":"node_prefix \"\" { policy = \"read\" }","Hash":"J7N2FZKEM9xiji5uVAEbAroBD/F3Eq8bgddLgVZCCHI=","CreateIndex":442,"ModifyIndex":442}
+```
+
+now add this policy to the anonymous token
+
+```
+kubectl exec -it consul-0 -- curl \
+    --request PUT \
+    --header "X-Consul-Token: <master token>" \
+    --data '{
+        "Description": "Anonymous Token - Can List Nodes",
+        "Policies": [{"ID": "7429a177-a322-9e8e-efc0-36e9e78f51f3"}]
+        }' http://127.0.0.1:8500/v1/acl/token/00000000-0000-0000-0000-000000000002
+{"AccessorID":"00000000-0000-0000-0000-000000000002","SecretID":"anonymous","Description":"Anonymous Token - Can List Nodes","Policies":[{"ID":"7429a177-a322-9e8e-efc0-36e9e78f51f3","Name":"list-al-nodes"}],"Local":false,"CreateTime":"2019-02-22T15:29:52.237703424Z","Hash":"yijZb8sb7ra0vt6/B8DFeNFXfwqL69tdgFMb0QOOy/c=","CreateIndex":5,"ModifyIndex":487}
 ```
 
 ### Verification
@@ -217,11 +247,11 @@ kubectl logs consul-0
 The consul CLI can also be used to check the health of the cluster. In a new terminal start a port-forward to the `consul-0` pod.
 
 ```
-kubectl port-forward consul-0 8400:8400
+kubectl port-forward consul-0 8500:8500
 ```
 ```
-Forwarding from 127.0.0.1:8400 -> 8400
-Forwarding from [::1]:8400 -> 8400
+Forwarding from 127.0.0.1:8500 -> 8500
+Forwarding from [::1]:8500 -> 8500
 ```
 
 Run the `consul members` command to view the status of each cluster member.
