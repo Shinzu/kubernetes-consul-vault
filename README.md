@@ -158,13 +158,13 @@ First create bootstrap master token, this is a managment token:
 On the ACL Page in the WebUI create a new Agent Token Policy.(You can use the master token to access this)
 
 ```
-node "" {
+node_prefix "" {
     policy = "write"
 }
-service "" {
+service_prefix "" {
     policy = "read"
 }
-key "lock/" {
+key_prefix "lock/" {
   policy = "write"
 }
 ```
@@ -278,19 +278,19 @@ quote-escaping problems.(Can also be done via ACL API, see above)
 3. Click "ACL"
 4. Add an ACL with name vault-token, type client, rules:
 ```
-key "vault/" {
+key_prefix "vault/" {
     policy = "write" 
 }
 service "vault" {
     policy = "write" 
 }
-session "" {
+session_prefix "" {
     policy = "write" 
 }
-node "" {
+node_prefix "" {
     policy = "write"
 }
-agent "" {
+agent_prefix "" {
     policy = "write"
 }
 ```
